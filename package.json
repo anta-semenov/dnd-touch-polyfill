@@ -1,6 +1,6 @@
 {
   "name": "dnd-touch-polyfill",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "Polyfill that intercept touch events and invoke drag and drop events. Fork from https://github.com/Bernardo-Castilho/dragdroptouch",
   "main": "lib/index.js",
   "scripts": {

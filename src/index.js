@@ -55,7 +55,7 @@ const defaultConfig = {
 
 let isListening = false
 
-export function initTouchDragDrop(initialConfig) {
+export default function initTouchDragDrop(initialConfig) {
     const config = {...defaultConfig, ...initialConfig}
     let isDragging = false
     let usingDnDApi = false
@@ -125,7 +125,7 @@ export function initTouchDragDrop(initialConfig) {
         })
     }
 
-    function getDelta(point1, point2): number {
+    function getDelta(point1, point2) {
         return Math.abs(point2.x - point1.x) + Math.abs(point2.y - point1.y)
     }
 
@@ -152,36 +152,16 @@ export function initTouchDragDrop(initialConfig) {
         const coordinateSource = event.touches ? event.touches[0] : event
         const targetCoordinates = target.getBoundingClientRect()
 
-        const newEvent = new CustomEvent(type, {detail:{
-          ...copyProps({}, event, keyProperties),
-          ...copyProps({}, coordinateSource, coordinateProperties),
-          dataTransfer,
-          offsetX: coordinateSource.pageX - targetCoordinates.left,
-          offsetY: coordinateSource.pageY - targetCoordinates.top,
-          buttons: event.touches.length || event.buttons || 0,
-          which: event.touches.length || event.buttons || 0,
-          button: 0
-        }})
-        newEvent.initEvent(type, true, true)
-        /*    type,
-            {
-                ...event,
-                ...coordinateSource,
-                dataTransfer,
-                offsetX: coordinateSource.pageX - targetCoordinates.left,
-                offsetY: coordinateSource.pageY - targetCoordinates.top,
-                buttons: event.touches.length || event.buttons || 0,
-                which: event.touches.length || event.buttons || 0,
-                button: 0
-            }
-        )*/
-        newEvent.button = 0
-        newEvent.which = newEvent.buttons = 1
-        copyProps(newEvent, event, 'altKey,ctrlKey,metaKey,shiftKey'.split(','))
-        copyProps(newEvent, coordinateSource, 'pageX,pageY,clientX,clientY,screenX,screenY'.split(','))
+        const newEvent = new CustomEvent(type, {bubbles: true, cancelable: true})
+        copyProps(newEvent, event, keyProperties),
+        copyProps(newEvent, coordinateSource, coordinateProperties),
         newEvent.dataTransfer = dataTransfer
         newEvent.offsetX = coordinateSource.pageX - targetCoordinates.left
         newEvent.offsetY = coordinateSource.pageY - targetCoordinates.top
+        newEvent.buttons = event.touches.length || event.buttons || 0
+        newEvent.which = event.touches.length || event.buttons || 0
+        newEvent.button = 0
+
         target.dispatchEvent(newEvent)
         return newEvent.defaultPrevented
     }
@@ -243,7 +223,7 @@ export function initTouchDragDrop(initialConfig) {
         if (dragSource) {
             usingDnDApi = true
             dataTransfer = DataTransfer()
-            dispatchEvent(event, 'dragStart', dragSource)
+            dispatchEvent(event, 'dragstart', dragSource)
             dispatchEvent(event, 'dragenter', getTarget(event))
             if (config.generateDragImage) {
                 createImage(event)
