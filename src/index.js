@@ -58,6 +58,7 @@ let isListening = false
 export default function initTouchDragDrop(initialConfig) {
   const config = {...defaultConfig, ...initialConfig}
   let isDragging = false
+  let dragCanStart = false
   let usingDnDApi = false
   let dragSource
   let dragImage
@@ -82,6 +83,7 @@ export default function initTouchDragDrop(initialConfig) {
     lastTouch = null
     isDragging = false
     usingDnDApi = false
+    dragCanStart = false
   }
 
   function shouldHandle(event) {
@@ -251,15 +253,24 @@ export default function initTouchDragDrop(initialConfig) {
     lastTouch = event
 
     if (event.touches.length === 2) {
-      startDrag(event)
+      dragCanStart = true
     } else if (event.touches.length === 1) {
-      setTimeout((
+      setTimeout(
         () => {
           if (touchId === currentTouchId) {
-            startDrag(event)
+            dragCanStart = true
           }
-        }),
+        },
         config.dragInitDelay
+      )
+
+      setTimeout(
+        () => {
+          if (!isDragging) {
+            dispatchEvent(event, 'contextmenu', event.target)
+          }
+        },
+        config.contextMenuDelay
       )
     }
   }
@@ -275,8 +286,11 @@ export default function initTouchDragDrop(initialConfig) {
       return
     }
 
-    if (!isDragging && getDelta(touchPoint, getPoint(event)) > config.dragInitThreshold) {
+    const delta = getDelta(touchPoint, getPoint(event))
+    if (!dragCanStart && delta > config.dragInitThreshold) {
       touchId++
+    } else if (delta > config.dragInitThreshold) {
+      startDrag(lastTouch)
     }
 
     if (isDragging && usingDnDApi) {
