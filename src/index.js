@@ -60,6 +60,7 @@ export default function initTouchDragDrop(initialConfig) {
   let isDragging = false
   let dragCanStart = false
   let usingDnDApi = false
+  let contextMenu = false
   let dragSource
   let dragImage
   let dragImageOffset
@@ -84,6 +85,7 @@ export default function initTouchDragDrop(initialConfig) {
     isDragging = false
     usingDnDApi = false
     dragCanStart = false
+    contextMenu = false
   }
 
   function shouldHandle(event) {
@@ -148,7 +150,7 @@ export default function initTouchDragDrop(initialConfig) {
     return draggableElement || null
   }
 
-  function dispatchEvent(event, type, target) {
+  function dispatchEvent(event, type, target, eventProperties) {
     if (!event || !target) { return false }
 
     const coordinateSource = event.touches ? event.touches[0] : event
@@ -163,6 +165,9 @@ export default function initTouchDragDrop(initialConfig) {
     newEvent.buttons = event.touches.length || event.buttons || 0
     newEvent.which = event.touches.length || event.buttons || 0
     newEvent.button = 0
+    if (eventProperties && typeof eventProperties === 'object') {
+      copyProps(newEvent, eventProperties, Object.keys(eventProperties))
+    }
 
     target.dispatchEvent(newEvent)
     return newEvent.defaultPrevented
@@ -267,6 +272,7 @@ export default function initTouchDragDrop(initialConfig) {
       setTimeout(
         () => {
           if (!isDragging) {
+            contextMenu = true
             dispatchEvent(event, 'contextmenu', event.target)
           }
         },
@@ -287,9 +293,9 @@ export default function initTouchDragDrop(initialConfig) {
     }
 
     const delta = getDelta(touchPoint, getPoint(event))
-    if (!dragCanStart && delta > config.dragInitThreshold) {
+    if (!isDragging && !dragCanStart && delta > config.dragInitThreshold) {
       touchId++
-    } else if (delta > config.dragInitThreshold) {
+    } else if (!isDragging && delta > config.dragInitThreshold) {
       startDrag(lastTouch)
     }
 
@@ -314,7 +320,7 @@ export default function initTouchDragDrop(initialConfig) {
   function touchEnd(event) {
     if (!shouldHandle(event)) {return }
 
-    if (!isDragging) {
+    if (!isDragging && !contextMenu) {
       dragSource = null
       dispatchEvent(lastTouch, 'click', event.target)
       lastClick = Date.now()
