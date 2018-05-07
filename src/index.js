@@ -242,10 +242,9 @@ export default function initTouchDragDrop(initialConfig) {
   function touchStart(event) {
     if (!shouldHandle(event)) {return }
 
-    event.preventDefault()
-
     if (Date.now() - lastClick < config.doubleClickInterval) {
       if (dispatchEvent(event, 'dbclick', event.target)) {
+        event.preventDefault()
         reset()
         return
       }
@@ -258,6 +257,7 @@ export default function initTouchDragDrop(initialConfig) {
     lastTouch = event
 
     if (event.touches.length === 2) {
+      event.preventDefault()
       dragCanStart = true
     } else if (event.touches.length === 1) {
       setTimeout(
@@ -268,6 +268,15 @@ export default function initTouchDragDrop(initialConfig) {
         },
         config.dragInitDelay
       )
+
+      /*setTimeout(
+        () => {
+          if (touchId === currentTouchId) {
+            event.preventDefault()
+          }
+        },
+        50
+      )*/
 
       setTimeout(
         () => {
